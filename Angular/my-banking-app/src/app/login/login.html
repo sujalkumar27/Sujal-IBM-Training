@@ -1,0 +1,15 @@
+<h2>Login</h2>
+
+<form [formGroup]="loginForm" (ngSubmit)="login()">
+  <label>Username</label><br>
+  <input formControlName="username" /><br><br>
+
+  <label>Password</label><br>
+  <input type="password" formControlName="password" /><br><br>
+
+  <button type="submit">Login</button>
+</form>
+
+<div *ngIf="error" style="color: red; margin-top: 1rem;">
+  {{ error }}
+</div>

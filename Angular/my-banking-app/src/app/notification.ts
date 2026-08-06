@@ -6,6 +6,7 @@ import { Injectable } from '@angular/core';
 export class NotificationService {
 
   notifyUser(message: string) {
+    alert(message);
     console.log('Notification:', message);
   }
 

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   FormGroup,
   FormControl,
@@ -11,11 +12,12 @@ import { AuthService } from '../auth.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule],
-  templateUrl: './login.html'
+  imports: [ReactiveFormsModule, CommonModule],
+  templateUrl: 'login.html'
 })
-
 export class LoginComponent {
+  accountNumber = '1234567890';
+
   loginForm = new FormGroup({
     username: new FormControl('user', [Validators.required]),
     password: new FormControl('user', [Validators.required])

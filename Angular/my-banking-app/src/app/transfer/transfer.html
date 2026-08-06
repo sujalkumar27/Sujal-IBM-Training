@@ -1,99 +1,33 @@
-<h2>Fund Transfer</h2>
+﻿<div class="card transfer-card">
+  <div class="section-header">
+    <h2>Fund Transfer</h2>
+    <p class="subheading">Send money securely to another account in just a few steps.</p>
+  </div>
 
-<form
-[formGroup]="transferForm"
-(ngSubmit)="transfer()">
+  <form [formGroup]="transferForm" (ngSubmit)="transfer()" class="form-grid">
+    <div class="field">
+      <label>From Account</label>
+      <input formControlName="fromAccount" placeholder="Enter source account" />
+    </div>
 
-<label>
+    <div class="field">
+      <label>To Account</label>
+      <input formControlName="toAccount" placeholder="Enter destination account" />
+    </div>
 
-From Account
+    <div class="field">
+      <label>Amount</label>
+      <input type="number" formControlName="amount" placeholder="Enter amount" />
+      <div *ngIf="transferForm.get('amount')?.errors?.['min']" class="error">
+        Minimum transfer amount is ₹100.
+      </div>
+      <div *ngIf="transferForm.get('amount')?.valid && insufficientFunds" class="error">
+        Insufficient balance for this transfer.
+      </div>
+    </div>
 
-</label>
+    <button type="submit" class="btn btn-primary" [disabled]="transferForm.invalid || insufficientFunds">Transfer</button>
+  </form>
 
-<br>
-
-<input
-formControlName="fromAccount">
-
-<br><br>
-
-<label>
-
-To Account
-
-</label>
-
-<br>
-
-<input
-formControlName="toAccount">
-
-<br><br>
-
-<label>
-
-Amount
-
-</label>
-
-<br>
-
-<input
-type="number"
-formControlName="amount">
-
-<div
-*ngIf="transferForm.get('amount')?.errors?.['min']">
-
-Minimum Transfer Amount is ₹100
-
+  <div *ngIf="message" class="note">{{ message }}</div>
 </div>
-
-<br><br>
-
-<h3>
-
-Beneficiaries
-
-</h3>
-
-<div formArrayName="beneficiaries">
-
-<div
-*ngFor="let b of beneficiaries.controls; let i=index">
-
-<input
-[formControlName]="i">
-
-</div>
-
-</div>
-
-<br>
-
-<button
-type="button"
-(click)="addBeneficiary()">
-
-Add Beneficiary
-
-</button>
-
-<br><br>
-
-<button
-type="submit">
-
-Transfer
-
-</button>
-
-</form>
-
-<hr>
-
-<p>
-
-{{message}}
-
-</p>

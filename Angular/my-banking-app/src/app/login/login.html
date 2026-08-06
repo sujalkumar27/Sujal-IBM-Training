@@ -1,15 +1,24 @@
-<h2>Login</h2>
+﻿<div class="card login-card">
+  <div class="section-header">
+    <h2>Welcome back</h2>
+    <p class="subheading">Sign in to access your dashboard, transfer funds, and view your recent activity.</p>
+  </div>
 
-<form [formGroup]="loginForm" (ngSubmit)="login()">
-  <label>Username</label><br>
-  <input formControlName="username" /><br><br>
+  <form [formGroup]="loginForm" (ngSubmit)="login()" class="form-grid">
+    <div class="field">
+      <label>Username</label>
+      <input formControlName="username" placeholder="Enter username" />
+    </div>
 
-  <label>Password</label><br>
-  <input type="password" formControlName="password" /><br><br>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" formControlName="password" placeholder="Enter password" />
+    </div>
 
-  <button type="submit">Login</button>
-</form>
+    <button type="submit" class="btn btn-primary">Login</button>
+  </form>
 
-<div *ngIf="error" style="color: red; margin-top: 1rem;">
-  {{ error }}
+  <p class="note">Use <strong>user</strong> / <strong>user</strong> to sign in.</p>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
 </div>

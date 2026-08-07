@@ -1,87 +1,92 @@
-import React from "react";
+import React, { useContext } from "react";
+import { BankContext } from "../context/BankContext";
 
-function TransactionHistory({ transactions }) {
+function TransactionHistory() {
+
+  const { state } = useContext(BankContext);
 
   return (
 
     <div className="history">
 
-      <h2>
-        Transaction History
-      </h2>
-
+      <h2>Transaction History</h2>
 
       {
-        transactions.length === 0 ? (
+        state.transactions.length === 0 ? (
 
-          <p>
-            No Transactions Yet
-          </p>
+          <p>No Transactions Yet</p>
 
         ) : (
 
           <ul>
 
             {
-              transactions.map((item, index) => (
 
-                <li
-                  key={index}
-                  className={
-                    item.type === "Deposit"
-                      ? "deposit-history"
-                      : "withdraw-history"
-                  }
-                >
+              [...state.transactions]
+                .reverse()
+                .map((item, index) => (
 
-                  <h3>
-                    {
+                  <li
+                    key={index}
+                    className={
                       item.type === "Deposit"
-                        ? "🟢 Deposit"
-                        : "🔴 Withdraw"
+                        ? "deposit-history"
+                        : "withdraw-history"
                     }
-                  </h3>
+                  >
 
+                    <h3>
 
-                  <p>
-                    Amount:
-                    ₹{item.amount}
-                  </p>
+                      {
+                        item.type === "Deposit"
+                          ? "🟢 Deposit"
+                          : "🔴 Withdraw"
+                      }
 
+                    </h3>
 
-                  <p>
-                    Remaining Balance:
-                    ₹{item.balance}
-                  </p>
+                    <p>
 
+                      Amount : ₹{item.amount}
 
-                  <small>
-                    📅 {item.date}
-                  </small>
+                    </p>
 
-                  <br />
+                    <p>
 
-                  <small>
-                    ⏰ {item.time}
-                  </small>
+                      Remaining Balance : ₹{item.balance}
 
+                    </p>
 
-                </li>
+                    <small>
 
-              ))
+                      📅 {item.date}
+
+                    </small>
+
+                    <br />
+
+                    <small>
+
+                      ⏰ {item.time}
+
+                    </small>
+
+                  </li>
+
+                ))
+
             }
 
           </ul>
 
         )
-      }
 
+      }
 
     </div>
 
   );
 
 }
-
 
 export default TransactionHistory;

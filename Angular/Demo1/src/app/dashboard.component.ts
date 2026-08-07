@@ -12,5 +12,6 @@ import { CurrencyPipe } from '@angular/common';
  `,
 })
 export class DashboardComponent {
+    
  balance: number = 5000;
 }

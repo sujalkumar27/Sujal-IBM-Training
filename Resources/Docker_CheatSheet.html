@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker Cheat Sheet - Quick Learning Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #0d1b2a;
+    color: #e0e1dd;
+    line-height: 1.6;
+    padding: 20px;
+  }
+  header {
+    background: linear-gradient(135deg, #0db7ed, #066da5);
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(13,183,237,0.3);
+  }
+  header h1 { font-size: 2.5em; color: #fff; }
+  header p { color: #e0f7ff; margin-top: 8px; font-size: 1.1em; }
+
+  .container { max-width: 1200px; margin: auto; }
+
+  .toc {
+    background: #1b263b;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    border-left: 4px solid #0db7ed;
+  }
+  .toc h2 { color: #0db7ed; margin-bottom: 10px; }
+  .toc ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+  .toc a { color: #e0e1dd; text-decoration: none; padding: 6px 10px; border-radius: 5px; display: block; transition: 0.3s; }
+  .toc a:hover { background: #0db7ed; color: #0d1b2a; }
+
+  section {
+    background: #1b263b;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    border-left: 4px solid #0db7ed;
+  }
+  section h2 {
+    color: #0db7ed;
+    border-bottom: 2px solid #415a77;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    font-size: 1.6em;
+  }
+  section h3 {
+    color: #f4a261;
+    margin: 15px 0 8px 0;
+    font-size: 1.2em;
+  }
+  p, li { color: #d4d4d4; margin-bottom: 6px; }
+  ul, ol { padding-left: 25px; }
+
+  code {
+    background: #0d1b2a;
+    color: #f4a261;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.95em;
+  }
+  pre {
+    background: #0d1b2a;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    border-left: 3px solid #0db7ed;
+    margin: 10px 0;
+  }
+  pre code { background: none; color: #90e0ef; padding: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    background: #0d1b2a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #415a77;
+  }
+  th { background: #0db7ed; color: #0d1b2a; }
+  tr:hover { background: #1b263b; }
+
+  .tip {
+    background: #2a9d8f;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    margin: 10px 0;
+    border-left: 4px solid #fff;
+  }
+  .warning {
+    background: #e76f51;
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    margin: 10px 0;
+    border-left: 4px solid #fff;
+  }
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: #778da9;
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>🐳 Docker Cheat Sheet</h1>
+  <p>Quick Reference Guide for Learning & Exam Preparation</p>
+</header>
+
+<nav class="toc">
+  <h2>📚 Table of Contents</h2>
+  <ul>
+    <li><a href="#intro">1. What is Docker?</a></li>
+    <li><a href="#arch">2. Docker Architecture</a></li>
+    <li><a href="#install">3. Installation Basics</a></li>
+    <li><a href="#images">4. Docker Images</a></li>
+    <li><a href="#containers">5. Containers</a></li>
+    <li><a href="#dockerfile">6. Dockerfile</a></li>
+    <li><a href="#volumes">7. Volumes & Storage</a></li>
+    <li><a href="#network">8. Networking</a></li>
+    <li><a href="#compose">9. Docker Compose</a></li>
+    <li><a href="#registry">10. Registry & Hub</a></li>
+    <li><a href="#swarm">11. Docker Swarm</a></li>
+    <li><a href="#best">12. Best Practices</a></li>
+    <li><a href="#commands">13. Command Summary</a></li>
+  </ul>
+</nav>
+
+<section id="intro">
+  <h2>1. What is Docker?</h2>
+  <p><strong>Docker</strong> is an open-source platform for developing, shipping, and running applications inside lightweight, portable containers.</p>
+  <h3>Key Concepts:</h3>
+  <ul>
+    <li><strong>Container:</strong> A runnable instance of an image — isolated process with its own filesystem.</li>
+    <li><strong>Image:</strong> A read-only template with instructions to create a container.</li>
+    <li><strong>Docker Engine:</strong> Client-server application (daemon + REST API + CLI).</li>
+    <li><strong>Docker Hub:</strong> Cloud-based registry to share images.</li>
+  </ul>
+  <div class="tip">💡 Containers vs VMs: Containers share the host OS kernel; VMs run a full guest OS. Containers are lighter, faster, and more portable.</div>
+</section>
+
+<section id="arch">
+  <h2>2. Docker Architecture</h2>
+  <ul>
+    <li><strong>Docker Client (CLI):</strong> Sends commands to the daemon (<code>docker</code> command).</li>
+    <li><strong>Docker Daemon (dockerd):</strong> Manages Docker objects — images, containers, networks, volumes.</li>
+    <li><strong>Docker Registry:</strong> Stores Docker images (Docker Hub is the default public registry).</li>
+    <li><strong>Docker Objects:</strong> Images, Containers, Networks, Volumes, Plugins.</li>
+  </ul>
+  <p>Docker uses <strong>REST API</strong> over UNIX sockets or a network interface for client-daemon communication.</p>
+</section>
+
+<section id="install">
+  <h2>3. Installation & Basic Info</h2>
+  <pre><code>docker --version           # Check installed version
+docker info                # Detailed system-wide information
+docker help                # List all commands
+docker system df           # Disk usage by Docker
+docker system prune        # Remove unused data</code></pre>
+</section>
+
+<section id="images">
+  <h2>4. Docker Images</h2>
+  <p>An <strong>image</strong> is a read-only template used to create containers. Built in layers.</p>
+  <h3>Image Commands:</h3>
+  <pre><code>docker pull &lt;image&gt;              # Download image from registry
+docker images                    # List local images
+docker rmi &lt;image&gt;               # Remove an image
+docker image prune               # Remove dangling images
+docker build -t myapp:1.0 .      # Build image from Dockerfile
+docker tag myapp:1.0 user/myapp  # Tag an image
+docker history &lt;image&gt;           # Show image layers
+docker inspect &lt;image&gt;           # Detailed image info
+docker save -o file.tar &lt;image&gt; # Export image
+docker load -i file.tar          # Import image</code></pre>
+  <div class="tip">💡 Image tags follow the format <code>repository:tag</code>. If no tag is specified, <code>latest</code> is used.</div>
+</section>
+
+<section id="containers">
+  <h2>5. Containers</h2>
+  <h3>Lifecycle Commands:</h3>
+  <pre><code>docker run &lt;image&gt;               # Create + start container
+docker run -d nginx              # Detached mode
+docker run -it ubuntu bash       # Interactive terminal
+docker run -p 8080:80 nginx      # Port mapping
+docker run --name web nginx      # Custom name
+docker run -e ENV=prod nginx     # Environment variables
+
+docker ps                        # Running containers
+docker ps -a                     # All containers
+docker start &lt;id&gt;                # Start a stopped container
+docker stop &lt;id&gt;                 # Graceful stop
+docker restart &lt;id&gt;              # Restart
+docker kill &lt;id&gt;                 # Force stop (SIGKILL)
+docker rm &lt;id&gt;                   # Remove container
+docker rm -f &lt;id&gt;                # Force remove
+
+docker exec -it &lt;id&gt; bash        # Enter running container
+docker logs &lt;id&gt;                 # View logs
+docker logs -f &lt;id&gt;              # Follow logs
+docker stats                     # Live resource usage
+docker top &lt;id&gt;                  # Running processes
+docker inspect &lt;id&gt;              # Detailed info
+docker cp file.txt &lt;id&gt;:/path    # Copy to container</code></pre>
+
+  <h3>Common Run Flags:</h3>
+  <table>
+    <tr><th>Flag</th><th>Description</th></tr>
+    <tr><td><code>-d</code></td><td>Detached (background)</td></tr>
+    <tr><td><code>-it</code></td><td>Interactive + TTY</td></tr>
+    <tr><td><code>-p host:container</code></td><td>Port mapping</td></tr>
+    <tr><td><code>-v host:container</code></td><td>Volume mount</td></tr>
+    <tr><td><code>-e KEY=VAL</code></td><td>Environment variable</td></tr>
+    <tr><td><code>--name</code></td><td>Assign name</td></tr>
+    <tr><td><code>--rm</code></td><td>Auto-remove on exit</td></tr>
+    <tr><td><code>--network</code></td><td>Connect to network</td></tr>
+    <tr><td><code>--restart</code></td><td>Restart policy (no, always, on-failure)</td></tr>
+  </table>
+</section>
+
+<section id="dockerfile">
+  <h2>6. Dockerfile</h2>
+  <p>A <strong>Dockerfile</strong> is a text file with instructions to build a Docker image.</p>
+  <h3>Common Instructions:</h3>
+  <table>
+    <tr><th>Instruction</th><th>Purpose</th></tr>
+    <tr><td><code>FROM</code></td><td>Base image (must be first)</td></tr>
+    <tr><td><code>LABEL</code></td><td>Metadata</td></tr>
+    <tr><td><code>WORKDIR</code></td><td>Set working directory</td></tr>
+    <tr><td><code>COPY</code></td><td>Copy files from host to image</td></tr>
+    <tr><td><code>ADD</code></td><td>Copy + supports URLs and auto-extract</td></tr>
+    <tr><td><code>RUN</code></td><td>Execute command at build time</td></tr>
+    <tr><td><code>CMD</code></td><td>Default command (only one, overridable)</td></tr>
+    <tr><td><code>ENTRYPOINT</code></td><td>Main executable (not easily overridden)</td></tr>
+    <tr><td><code>ENV</code></td><td>Environment variable</td></tr>
+    <tr><td><code>EXPOSE</code></td><td>Document ports</td></tr>
+    <tr><td><code>VOLUME</code></td><td>Create mount point</td></tr>
+    <tr><td><code>ARG</code></td><td>Build-time variables</td></tr>
+    <tr><td><code>USER</code></td><td>Set user for RUN/CMD</td></tr>
+    <tr><td><code>HEALTHCHECK</code></td><td>Container health test</td></tr>
+  </table>
+
+  <h3>Example Dockerfile:</h3>
+  <pre><code>FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["node", "server.js"]</code></pre>
+
+  <div class="tip">💡 <strong>CMD vs ENTRYPOINT:</strong> CMD provides defaults that can be overridden; ENTRYPOINT defines the command that always runs.</div>
+</section>
+
+<section id="volumes">
+  <h2>7. Volumes & Storage</h2>
+  <p>Docker offers three ways to persist data:</p>
+  <ul>
+    <li><strong>Volumes:</strong> Managed by Docker in <code>/var/lib/docker/volumes/</code> — preferred.</li>
+    <li><strong>Bind Mounts:</strong> Map host directory into container.</li>
+    <li><strong>tmpfs Mounts:</strong> Stored in host memory only.</li>
+  </ul>
+  <h3>Volume Commands:</h3>
+  <pre><code>docker volume create myvol
+docker volume ls
+docker volume inspect myvol
+docker volume rm myvol
+docker volume prune
+
+# Mount volume
+docker run -v myvol:/data nginx
+docker run --mount source=myvol,target=/data nginx
+
+# Bind mount
+docker run -v /host/path:/container/path nginx</code></pre>
+</section>
+
+<section id="network">
+  <h2>8. Networking</h2>
+  <h3>Network Drivers:</h3>
+  <table>
+    <tr><th>Driver</th><th>Description</th></tr>
+    <tr><td><code>bridge</code></td><td>Default; isolated network on single host</td></tr>
+    <tr><td><code>host</code></td><td>Use host's network directly (no isolation)</td></tr>
+    <tr><td><code>none</code></td><td>No networking</td></tr>
+    <tr><td><code>overlay</code></td><td>Multi-host networking (Swarm)</td></tr>
+    <tr><td><code>macvlan</code></td><td>Assign MAC address to container</td></tr>
+  </table>
+
+  <h3>Network Commands:</h3>
+  <pre><code>docker network ls
+docker network create mynet
+docker network inspect mynet
+docker network rm mynet
+docker network connect mynet &lt;container&gt;
+docker network disconnect mynet &lt;container&gt;
+
+docker run --network=mynet nginx</code></pre>
+</section>
+
+<section id="compose">
+  <h2>9. Docker Compose</h2>
+  <p><strong>Docker Compose</strong> is a tool for defining and running multi-container applications using a YAML file (<code>docker-compose.yml</code>).</p>
+  <h3>Example docker-compose.yml:</h3>
+  <pre><code>version: '3.8'
+services:
+  web:
+    image: nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - dbdata:/var/lib/mysql
+volumes:
+  dbdata:</code></pre>
+
+  <h3>Compose Commands:</h3>
+  <pre><code>docker compose up            # Start services
+docker compose up -d         # Detached
+docker compose down          # Stop and remove
+docker compose ps            # List services
+docker compose logs          # View logs
+docker compose build         # Build services
+docker compose restart       # Restart services
+docker compose exec &lt;svc&gt; bash</code></pre>
+</section>
+
+<section id="registry">
+  <h2>10. Registry & Docker Hub</h2>
+  <pre><code>docker login                     # Login to Docker Hub
+docker logout
+docker push user/myapp:1.0       # Push image
+docker pull user/myapp:1.0       # Pull image
+docker search nginx              # Search Docker Hub</code></pre>
+  <div class="tip">💡 You can run a private registry using the <code>registry</code> image: <code>docker run -d -p 5000:5000 registry:2</code></div>
+</section>
+
+<section id="swarm">
+  <h2>11. Docker Swarm (Orchestration)</h2>
+  <p>Docker's built-in orchestrator for managing a cluster of Docker nodes.</p>
+  <pre><code>docker swarm init                          # Initialize swarm
+docker swarm join --token &lt;tok&gt; &lt;ip&gt;       # Join swarm
+docker node ls                             # List nodes
+docker service create --name web nginx     # Create service
+docker service ls
+docker service scale web=5
+docker service ps web
+docker stack deploy -c compose.yml mystack # Deploy stack
+docker swarm leave --force</code></pre>
+  <p><strong>Key terms:</strong> Manager node, Worker node, Service, Task, Stack.</p>
+</section>
+
+<section id="best">
+  <h2>12. Best Practices</h2>
+  <ul>
+    <li>Use <strong>official base images</strong> from trusted sources.</li>
+    <li>Use <strong>small base images</strong> like <code>alpine</code> to reduce size.</li>
+    <li>Leverage <strong>multi-stage builds</strong> to keep final images lean.</li>
+    <li>Use <code>.dockerignore</code> to exclude unnecessary files.</li>
+    <li>Combine <code>RUN</code> commands using <code>&&</code> to reduce layers.</li>
+    <li>Never store secrets in images — use environment variables or Docker secrets.</li>
+    <li>Use <strong>specific tags</strong>, not <code>latest</code>, in production.</li>
+    <li>Run containers as <strong>non-root</strong> users.</li>
+    <li>Add <strong>HEALTHCHECK</strong> instructions in Dockerfiles.</li>
+    <li>Regularly scan images for vulnerabilities (e.g., <code>docker scan</code>).</li>
+  </ul>
+  <div class="warning">⚠️ Avoid installing unnecessary packages — larger images = bigger attack surface.</div>
+</section>
+
+<section id="commands">
+  <h2>13. Quick Command Summary</h2>
+  <table>
+    <tr><th>Category</th><th>Command</th></tr>
+    <tr><td>Info</td><td><code>docker info</code>, <code>docker version</code></td></tr>
+    <tr><td>Image</td><td><code>docker pull/build/push/rmi/images</code></td></tr>
+    <tr><td>Container</td><td><code>docker run/ps/start/stop/rm/exec/logs</code></td></tr>
+    <tr><td>Volume</td><td><code>docker volume create/ls/rm/prune</code></td></tr>
+    <tr><td>Network</td><td><code>docker network create/ls/inspect/rm</code></td></tr>
+    <tr><td>Compose</td><td><code>docker compose up/down/logs/ps</code></td></tr>
+    <tr><td>Swarm</td><td><code>docker swarm init</code>, <code>docker service ls</code></td></tr>
+    <tr><td>Cleanup</td><td><code>docker system prune -a</code></td></tr>
+  </table>
+</section>
+
+<footer>
+  <p>🚀 Master Docker one command at a time — Happy Learning!</p>
+</footer>
+
+</div>
+</body>
+</html>

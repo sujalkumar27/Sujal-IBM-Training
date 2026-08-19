@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Database Schema Migration & Data Persistence — Detailed Study Notes</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --card: #ffffff;
+    --ink: #1f1f1f;
+    --muted: #6b6b6b;
+    --accent: #c15f3c;
+    --accent-soft: #f4e3da;
+    --line: #e6e2dc;
+    --code-bg: #f3efe9;
+    --good: #2f7a4d;
+    --warn: #b8860b;
+    --bad:  #b23a3a;
+    --blue: #2c5f8d;
+    --blue-soft: #dde8f2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.65;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  header.hero {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+  header.hero h1 {
+    font-size: 36px;
+    margin: 0 0 10px;
+    letter-spacing: -0.5px;
+  }
+  header.hero p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 16px;
+  }
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+  .toc h3 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 20px;
+    columns: 2;
+    column-gap: 32px;
+  }
+  .toc a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .toc a:hover { color: var(--accent); }
+
+  section.topic {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 32px 36px;
+    margin-bottom: 26px;
+  }
+  section.topic h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  section.topic h2 .num {
+    display: inline-block;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 700;
+    background: var(--accent-soft);
+    padding: 3px 12px;
+    border-radius: 20px;
+  }
+  section.topic .tagline {
+    color: var(--muted);
+    font-style: italic;
+    margin: 0 0 20px;
+    font-size: 15px;
+  }
+  section.topic h4 {
+    margin: 22px 0 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--accent);
+    border-bottom: 1px dashed var(--line);
+    padding-bottom: 4px;
+  }
+  section.topic p { margin: 8px 0; }
+  section.topic ul, section.topic ol { margin: 6px 0 12px; padding-left: 24px; }
+  section.topic li { margin-bottom: 6px; }
+  code, pre {
+    font-family: "SF Mono", Consolas, Monaco, monospace;
+    font-size: 13px;
+  }
+  code {
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    border-left: 3px solid var(--accent);
+    margin: 10px 0;
+  }
+  pre code { background: none; padding: 0; }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .callout.good  { border-color: var(--good); background: #e6f2ec; }
+  .callout.warn  { border-color: var(--warn); background: #faf3dd; }
+  .callout.bad   { border-color: var(--bad);  background: #f7e3e3; }
+  .callout.info  { border-color: var(--blue); background: var(--blue-soft); }
+  .callout strong { display: block; margin-bottom: 4px; }
+  .callout ul { margin-top: 4px; }
+
+  .real-world {
+    border: 1px solid var(--line);
+    background: var(--blue-soft);
+    border-left: 4px solid var(--blue);
+    padding: 14px 18px;
+    border-radius: 6px;
+    margin: 14px 0;
+    font-size: 14.5px;
+  }
+  .real-world .label {
+    font-weight: 700;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-size: 12px;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th { background: var(--code-bg); font-weight: 600; }
+
+  .why-what-how {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .why-what-how .box {
+    background: var(--code-bg);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .why-what-how .box .label {
+    display: block;
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  @media (max-width: 700px) {
+    .why-what-how { grid-template-columns: 1fr; }
+    .toc ol { columns: 1; }
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <h1>Database Schema Migration &amp; Data Persistence</h1>
+  <p>Detailed study notes — the what, the why, the how, and real-world use cases for every concept.</p>
+</header>
+
+<nav class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#t1">ORM Concepts &amp; JPA</a></li>
+    <li><a href="#t2">Hibernate Fundamentals</a></li>
+    <li><a href="#t3">Entity Mapping &amp; Relationships</a></li>
+    <li><a href="#t4">JPQL, Criteria &amp; Native Queries</a></li>
+    <li><a href="#t5">Spring Data JPA Repositories</a></li>
+    <li><a href="#t6">Transactions &amp; Persistence Context</a></li>
+    <li><a href="#t7">Lazy vs Eager &amp; N+1 Problem</a></li>
+    <li><a href="#t8">Schema Versioning</a></li>
+    <li><a href="#t9">Flyway</a></li>
+    <li><a href="#t10">Liquibase</a></li>
+    <li><a href="#t11">Migrations Across Environments</a></li>
+    <li><a href="#t12">Rolling Back Migrations</a></li>
+    <li><a href="#t13">Zero-Downtime (Expand/Contract)</a></li>
+    <li><a href="#t14">Data Migration &amp; ETL</a></li>
+    <li><a href="#t15">Between Database Engines</a></li>
+    <li><a href="#t16">Validating Data Integrity</a></li>
+  </ol>
+</nav>
+
+<!-- ================= 1 ================= -->
+<section class="topic" id="t1">
+  <h2><span class="num">01</span> ORM Concepts &amp; the Java Persistence API (JPA)</h2>
+  <p class="tagline">Skip the boilerplate SQL — let Java objects talk to the database directly.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> A layer that maps Java classes to database tables.</div>
+    <div class="box"><span class="label">Why</span> Writing SQL for every save/load is repetitive and error-prone.</div>
+    <div class="box"><span class="label">How</span> Annotate classes; the ORM generates the SQL.</div>
+  </div>
+
+  <h4>The core idea</h4>
+  <p>In Java, you think in <strong>objects</strong>: a <code>User</code> object with name and email fields. In a database, the same information lives in a <strong>row</strong> of a <code>users</code> table. Object-Relational Mapping (ORM) is a middle layer that automatically translates between these two worlds:</p>
+  <ul>
+    <li>Java <code>class</code> ↔ database <code>table</code></li>
+    <li>Java <code>field</code> ↔ table <code>column</code></li>
+    <li>Java <code>object instance</code> ↔ table <code>row</code></li>
+    <li>Java <code>reference</code> to another object ↔ <code>foreign key</code></li>
+  </ul>
+
+  <h4>What is JPA specifically?</h4>
+  <p><strong>JPA (Java Persistence API)</strong> is not a library — it is a <em>specification</em>. It defines a standard set of interfaces (<code>EntityManager</code>, <code>Query</code>), annotations (<code>@Entity</code>, <code>@Id</code>, <code>@OneToMany</code>), and rules for how ORM should behave in Java. To actually run JPA code you need an <strong>implementation</strong>:</p>
+  <ul>
+    <li><strong>Hibernate</strong> — the most popular, feature-rich implementation.</li>
+    <li><strong>EclipseLink</strong> — the reference implementation.</li>
+    <li><strong>OpenJPA</strong> — Apache's implementation.</li>
+  </ul>
+  <p>Think of JPA as "the USB standard" and Hibernate as "one specific USB cable."</p>
+
+  <h4>Why not just write SQL?</h4>
+  <ul>
+    <li><strong>Less code</strong> — no manual row-to-object conversion (<code>ResultSet.getString(...)</code> everywhere).</li>
+    <li><strong>Portable</strong> — same code runs on MySQL, Postgres, Oracle. The ORM translates SQL dialects.</li>
+    <li><strong>Type-safe</strong> — the compiler catches typos in field names.</li>
+    <li><strong>Caching</strong> — ORM caches results, reducing DB calls.</li>
+    <li><strong>Relationships handled automatically</strong> — call <code>user.getOrders()</code>, ORM runs the join.</li>
+  </ul>
+
+  <h4>Minimal example</h4>
+  <pre><code>@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    @Column(unique = true)
+    private String email;
+
+    // getters, setters, constructors...
+}
+
+// Saving is one line
+entityManager.persist(new User("Sujal", "sujal@example.com"));</code></pre>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — E-commerce app</span>
+    An online store has <code>Customer</code>, <code>Product</code>, <code>Order</code>, and <code>OrderItem</code> classes. Instead of writing hundreds of SQL statements to insert orders, fetch customer histories, and update inventory, the team uses JPA. The result: 80% less database code, and switching from MySQL to PostgreSQL later took only a config change.
+  </div>
+
+  <div class="callout warn">
+    <strong>Trade-off</strong>
+    ORM can hide performance issues (see N+1 problem, section 7). Complex reporting queries are still often clearer in raw SQL.
+  </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="topic" id="t2">
+  <h2><span class="num">02</span> Hibernate Fundamentals</h2>
+  <p class="tagline">The workhorse ORM behind most Java applications.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> The most-used JPA implementation, plus extras.</div>
+    <div class="box"><span class="label">Why</span> Battle-tested, huge community, works with Spring.</div>
+    <div class="box"><span class="label">How</span> Configure a datasource; Hibernate handles the rest.</div>
+  </div>
+
+  <h4>Key building blocks</h4>
+  <table>
+    <tr><th>Component</th><th>Purpose</th><th>Lifetime</th></tr>
+    <tr><td><code>SessionFactory</code> / <code>EntityManagerFactory</code></td><td>Expensive factory that reads config and prepares connections</td><td>One per application (singleton)</td></tr>
+    <tr><td><code>Session</code> / <code>EntityManager</code></td><td>A short unit of work; runs queries, tracks changes</td><td>One per request/transaction</td></tr>
+    <tr><td><code>Transaction</code></td><td>Groups DB operations so they succeed or fail together</td><td>One per business operation</td></tr>
+    <tr><td><code>Query</code></td><td>Runs JPQL, HQL, or native SQL</td><td>Very short-lived</td></tr>
+  </table>
+
+  <h4>Entity lifecycle — the four states</h4>
+  <table>
+    <tr><th>State</th><th>Meaning</th><th>Example</th></tr>
+    <tr><td><strong>Transient</strong></td><td>New object, not in DB, ORM doesn't know it exists</td><td><code>new User()</code></td></tr>
+    <tr><td><strong>Persistent</strong></td><td>Managed by session; any change is auto-saved on commit</td><td>After <code>em.persist(user)</code></td></tr>
+    <tr><td><strong>Detached</strong></td><td>Was managed, but the session closed</td><td>User object returned to a controller</td></tr>
+    <tr><td><strong>Removed</strong></td><td>Marked for deletion; row disappears on commit</td><td>After <code>em.remove(user)</code></td></tr>
+  </table>
+
+  <h4>Configuration essentials (Spring Boot)</h4>
+  <pre><code>spring.datasource.url=jdbc:postgresql://localhost:5432/shop
+spring.datasource.username=admin
+spring.datasource.password=secret
+spring.jpa.hibernate.ddl-auto=validate    # never use 'create-drop' in prod!
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect</code></pre>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Banking system</span>
+    A bank's core account service uses Hibernate. When a customer transfers money, Hibernate opens a Session, loads both accounts (managed state), the code mutates balances, and on commit Hibernate generates two UPDATE statements plus an INSERT for the audit log — all inside one transaction. If any step fails, everything rolls back.
+  </div>
+
+  <div class="callout info">
+    <strong>Why Hibernate beats plain JDBC</strong>
+    <ul>
+      <li>Dirty checking — no manual UPDATE calls.</li>
+      <li>Automatic connection pooling.</li>
+      <li>Caching (L1 by default, L2 optional).</li>
+      <li>Lazy loading of related data.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="topic" id="t3">
+  <h2><span class="num">03</span> Entity Mapping and Relationships (1:1, 1:N, N:M)</h2>
+  <p class="tagline">Model how tables connect — the way the real world does.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> Annotations that describe joins between tables.</div>
+    <div class="box"><span class="label">Why</span> Real data is connected: users have orders, orders have items.</div>
+    <div class="box"><span class="label">How</span> <code>@OneToOne</code>, <code>@OneToMany</code>, <code>@ManyToOne</code>, <code>@ManyToMany</code>.</div>
+  </div>
+
+  <h4>Three relationship types</h4>
+  <table>
+    <tr><th>Type</th><th>Example</th><th>Foreign Key Lives On</th></tr>
+    <tr><td>@OneToOne</td><td>User ↔ UserProfile</td><td>Either side (or a shared PK)</td></tr>
+    <tr><td>@OneToMany / @ManyToOne</td><td>Department → Employees</td><td>The "many" side</td></tr>
+    <tr><td>@ManyToMany</td><td>Student ↔ Course</td><td>A separate join table</td></tr>
+  </table>
+
+  <h4>@OneToOne example — Employee &amp; Passport</h4>
+  <pre><code>@Entity
+public class Employee {
+    @Id private Long id;
+    private String name;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "passport_id")
+    private Passport passport;
+}</code></pre>
+
+  <h4>@OneToMany + @ManyToOne — the most common</h4>
+  <pre><code>@Entity
+public class Department {
+    @Id private Long id;
+    private String name;
+
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL)
+    private List&lt;Employee&gt; employees = new ArrayList&lt;&gt;();
+}
+
+@Entity
+public class Employee {
+    @Id private Long id;
+    private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")   // foreign key column
+    private Department department;
+}</code></pre>
+
+  <p><strong>"mappedBy"</strong> tells Hibernate: <em>"I'm not the owner of this relationship — look at the other side for the foreign key."</em> The side with <code>@JoinColumn</code> is the owning side.</p>
+
+  <h4>@ManyToMany with a join table</h4>
+  <pre><code>@Entity
+public class Student {
+    @Id private Long id;
+
+    @ManyToMany
+    @JoinTable(
+      name = "student_course",
+      joinColumns = @JoinColumn(name = "student_id"),
+      inverseJoinColumns = @JoinColumn(name = "course_id"))
+    private Set&lt;Course&gt; courses = new HashSet&lt;&gt;();
+}</code></pre>
+
+  <h4>Cascade types — what happens to children</h4>
+  <ul>
+    <li><code>CascadeType.PERSIST</code> — save parent → save children too.</li>
+    <li><code>CascadeType.MERGE</code> — update parent → update children.</li>
+    <li><code>CascadeType.REMOVE</code> — delete parent → delete children (dangerous with big trees).</li>
+    <li><code>CascadeType.ALL</code> — everything.</li>
+  </ul>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — LMS (Learning Management System)</span>
+    Coursera-style apps use <em>all three</em> relationships: a <code>User</code> has <em>one</em> <code>Profile</code> (1:1); a <code>Course</code> has <em>many</em> <code>Lessons</code> (1:N); <code>Students</code> enroll in <em>many</em> <code>Courses</code> and each course has <em>many</em> students (N:M through an "enrollment" join table that also stores enrollment date and grade).
+  </div>
+
+  <div class="callout warn">
+    <strong>Common mistake</strong>
+    Using <code>List</code> instead of <code>Set</code> for <code>@ManyToMany</code> — this causes Hibernate to fire many extra queries. Use <code>Set</code> for many-to-many, or promote the join to a real entity if you need extra fields.
+  </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="topic" id="t4">
+  <h2><span class="num">04</span> JPQL, Criteria API and Native Queries</h2>
+  <p class="tagline">Three ways to ask the database for exactly what you want.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> Query mechanisms provided by JPA.</div>
+    <div class="box"><span class="label">Why</span> Finder methods aren't enough for complex reads.</div>
+    <div class="box"><span class="label">How</span> Pick one based on how dynamic and portable it needs to be.</div>
+  </div>
+
+  <h4>JPQL — Java Persistence Query Language</h4>
+  <p>Looks like SQL but works on <strong>entity classes and fields</strong>, not tables and columns. Portable across databases.</p>
+  <pre><code>// JPQL — 'User' is the entity, 'name' is the Java field
+String jpql = "SELECT u FROM User u WHERE u.age &gt; :minAge ORDER BY u.name";
+TypedQuery&lt;User&gt; query = em.createQuery(jpql, User.class);
+query.setParameter("minAge", 18);
+List&lt;User&gt; users = query.getResultList();</code></pre>
+
+  <h4>Criteria API — build queries in code</h4>
+  <p>Everything is Java objects — no strings. Verbose, but perfect when the query is <em>built dynamically</em>.</p>
+  <pre><code>CriteriaBuilder cb = em.getCriteriaBuilder();
+CriteriaQuery&lt;User&gt; cq = cb.createQuery(User.class);
+Root&lt;User&gt; root = cq.from(User.class);
+
+List&lt;Predicate&gt; where = new ArrayList&lt;&gt;();
+if (nameFilter != null) where.add(cb.like(root.get("name"), "%" + nameFilter + "%"));
+if (minAge != null)     where.add(cb.gt(root.get("age"), minAge));
+
+cq.where(cb.and(where.toArray(new Predicate[0])));
+List&lt;User&gt; result = em.createQuery(cq).getResultList();</code></pre>
+
+  <h4>Native SQL — full power, less portable</h4>
+  <p>When you need database-specific features (window functions, JSON operators, hierarchical queries).</p>
+  <pre><code>Query q = em.createNativeQuery(
+    "SELECT * FROM users WHERE created_at &gt; NOW() - INTERVAL '30 days'",
+    User.class);
+List&lt;User&gt; recent = q.getResultList();</code></pre>
+
+  <h4>Which one, when?</h4>
+  <table>
+    <tr><th>Situation</th><th>Best Choice</th></tr>
+    <tr><td>Simple static query</td><td>JPQL (or Spring Data derived query)</td></tr>
+    <tr><td>Filters chosen by user at runtime</td><td>Criteria API</td></tr>
+    <tr><td>Vendor feature (JSONB, CTE, PIVOT)</td><td>Native SQL</td></tr>
+    <tr><td>Reporting with joins across many tables</td><td>Native SQL — clearer &amp; faster</td></tr>
+  </table>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Airbnb-style search</span>
+    A listing search page has filters for price, location, dates, guest count, amenities — most optional. The team uses the Criteria API to build the query only from filters the user actually chose. A separate "recommendations" page uses a native PostgreSQL query with a window function to rank listings.
+  </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="topic" id="t5">
+  <h2><span class="num">05</span> Spring Data JPA Repositories</h2>
+  <p class="tagline">Zero implementation code — Spring writes the repository for you.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> An interface layer that generates CRUD implementations at startup.</div>
+    <div class="box"><span class="label">Why</span> 90% of DAO code is boilerplate — eliminate it.</div>
+    <div class="box"><span class="label">How</span> Extend <code>JpaRepository</code>; name your methods correctly.</div>
+  </div>
+
+  <h4>The magic of the interface</h4>
+  <pre><code>public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+
+    // Derived — Spring parses the name and generates SQL automatically
+    List&lt;User&gt; findByLastName(String lastName);
+    List&lt;User&gt; findByAgeGreaterThanEqualAndActiveTrue(int age);
+    Optional&lt;User&gt; findByEmail(String email);
+    long countByCountry(String country);
+
+    // Paging &amp; sorting
+    Page&lt;User&gt; findByCountry(String country, Pageable pageable);
+
+    // Custom JPQL when a derived name would be ugly
+    @Query("SELECT u FROM User u WHERE SIZE(u.orders) &gt; :n")
+    List&lt;User&gt; findUsersWithMoreThanNOrders(@Param("n") int n);
+
+    // Native query
+    @Query(value = "SELECT * FROM users WHERE created_at &gt; ?1", nativeQuery = true)
+    List&lt;User&gt; findRecent(LocalDate date);
+
+    // Modifying query
+    @Modifying
+    @Query("UPDATE User u SET u.active = false WHERE u.lastLogin &lt; :cutoff")
+    int deactivateInactive(@Param("cutoff") LocalDate cutoff);
+}</code></pre>
+
+  <h4>Method-name keywords</h4>
+  <table>
+    <tr><th>Keyword</th><th>Example</th><th>SQL fragment</th></tr>
+    <tr><td>And / Or</td><td><code>findByNameAndCity</code></td><td>WHERE name = ? AND city = ?</td></tr>
+    <tr><td>Between</td><td><code>findByAgeBetween</code></td><td>WHERE age BETWEEN ? AND ?</td></tr>
+    <tr><td>LessThan / GreaterThan</td><td><code>findByPriceLessThan</code></td><td>WHERE price &lt; ?</td></tr>
+    <tr><td>Like / Containing</td><td><code>findByNameContaining</code></td><td>WHERE name LIKE %?%</td></tr>
+    <tr><td>OrderBy</td><td><code>findByCityOrderByAgeDesc</code></td><td>ORDER BY age DESC</td></tr>
+    <tr><td>Top / First</td><td><code>findTop5ByOrderBySalaryDesc</code></td><td>LIMIT 5</td></tr>
+  </table>
+
+  <h4>You get for free</h4>
+  <ul>
+    <li><code>save(entity)</code>, <code>saveAll(list)</code></li>
+    <li><code>findById</code>, <code>findAll</code>, <code>existsById</code>, <code>count</code></li>
+    <li><code>deleteById</code>, <code>deleteAll</code></li>
+    <li>Paging: <code>findAll(PageRequest.of(0, 20))</code></li>
+  </ul>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — SaaS admin panel</span>
+    An HR SaaS product has 40+ entity types (Employee, Payslip, Leave, Department, …). Instead of 40 DAO classes with hundreds of methods, they have 40 repository interfaces — most with only a handful of custom queries. Development on new modules is ~3× faster.
+  </div>
+
+  <div class="callout good">
+    <strong>Pro tip</strong>
+    Combine derived queries for common cases and <code>@Query</code> for anything complex. Don't be afraid to add a Specification or QueryDSL layer when queries get truly dynamic.
+  </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="topic" id="t6">
+  <h2><span class="num">06</span> Transactions and the Persistence Context</h2>
+  <p class="tagline">The safety net that keeps your data consistent.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> A transaction groups DB ops; the persistence context tracks entities during it.</div>
+    <div class="box"><span class="label">Why</span> Partial updates corrupt data. All-or-nothing is the only safe option.</div>
+    <div class="box"><span class="label">How</span> Wrap methods in <code>@Transactional</code>.</div>
+  </div>
+
+  <h4>ACID — the four transaction guarantees</h4>
+  <ul>
+    <li><strong>Atomicity</strong> — all steps happen, or none do.</li>
+    <li><strong>Consistency</strong> — DB moves from one valid state to another.</li>
+    <li><strong>Isolation</strong> — concurrent transactions don't corrupt each other.</li>
+    <li><strong>Durability</strong> — once committed, changes survive crashes.</li>
+  </ul>
+
+  <h4>@Transactional in Spring</h4>
+  <pre><code>@Service
+public class TransferService {
+
+    @Transactional  // starts + commits (or rolls back) automatically
+    public void transfer(Long fromId, Long toId, BigDecimal amount) {
+        Account from = accountRepo.findById(fromId).orElseThrow();
+        Account to   = accountRepo.findById(toId).orElseThrow();
+
+        from.debit(amount);
+        to.credit(amount);
+        // No repo.save() needed — dirty checking handles it!
+        auditRepo.save(new AuditLog(fromId, toId, amount));
+        // If ANY line throws, ALL previous DB changes roll back.
+    }
+}</code></pre>
+
+  <h4>Isolation levels — from loose to strict</h4>
+  <table>
+    <tr><th>Level</th><th>Allows</th><th>Use for</th></tr>
+    <tr><td>READ_UNCOMMITTED</td><td>Dirty reads</td><td>Almost never</td></tr>
+    <tr><td>READ_COMMITTED (default in most DBs)</td><td>Non-repeatable reads, phantoms</td><td>General web apps</td></tr>
+    <tr><td>REPEATABLE_READ</td><td>Phantoms only</td><td>Reports needing consistent snapshots</td></tr>
+    <tr><td>SERIALIZABLE</td><td>Nothing</td><td>Financial calcs, strict correctness</td></tr>
+  </table>
+
+  <h4>The Persistence Context — Hibernate's magic sauce</h4>
+  <p>During a transaction, Hibernate maintains an in-memory map of every entity you've touched. It gives you three big wins:</p>
+  <ul>
+    <li><strong>Identity guarantee</strong> — call <code>findById(1L)</code> twice and you get the <em>same object reference</em>.</li>
+    <li><strong>Dirty checking</strong> — Hibernate compares entities at commit against their loaded state and only UPDATEs changed fields. You never call <code>save()</code> for updates.</li>
+    <li><strong>First-level cache</strong> — repeat lookups don't hit the DB.</li>
+  </ul>
+
+  <pre><code>@Transactional
+public void bumpAge(Long userId) {
+    User u = userRepo.findById(userId).orElseThrow();
+    u.setAge(u.getAge() + 1);        // just mutate the object
+    // no save() call — Hibernate detects change and issues UPDATE on commit
+}</code></pre>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Payment gateway</span>
+    Stripe-like services wrap "charge card → record payment → send email → update ledger" in a single transaction. If the ledger update fails after the card charge, the transaction rolls back the DB changes and the code triggers a refund — the customer never sees an inconsistent state.
+  </div>
+
+  <div class="callout warn">
+    <strong>Gotcha — @Transactional only works on public methods called from OUTSIDE the class.</strong>
+    Spring uses proxies, so internal self-calls bypass the transaction annotation entirely.
+  </div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="topic" id="t7">
+  <h2><span class="num">07</span> Lazy vs. Eager Loading &amp; the N+1 Problem</h2>
+  <p class="tagline">The single most common Hibernate performance killer — and how to avoid it.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> Strategy for loading related entities.</div>
+    <div class="box"><span class="label">Why</span> Loading everything upfront wastes DB calls and memory; loading too late causes N+1.</div>
+    <div class="box"><span class="label">How</span> Default to LAZY, use fetch joins where needed.</div>
+  </div>
+
+  <h4>Eager loading</h4>
+  <p>Related data is loaded <em>immediately</em> with the parent, in the same query (or a follow-up).</p>
+  <pre><code>@ManyToOne(fetch = FetchType.EAGER)   // default for @ManyToOne
+private Department department;</code></pre>
+
+  <h4>Lazy loading</h4>
+  <p>Related data is loaded <em>only when accessed</em>. Hibernate returns a proxy instead of the real object.</p>
+  <pre><code>@OneToMany(fetch = FetchType.LAZY)    // default for @OneToMany
+private List&lt;Employee&gt; employees;</code></pre>
+
+  <h4>Default fetch types (memorize these)</h4>
+  <table>
+    <tr><th>Annotation</th><th>Default</th></tr>
+    <tr><td>@OneToOne</td><td>EAGER</td></tr>
+    <tr><td>@ManyToOne</td><td>EAGER</td></tr>
+    <tr><td>@OneToMany</td><td>LAZY</td></tr>
+    <tr><td>@ManyToMany</td><td>LAZY</td></tr>
+  </table>
+
+  <h4>The N+1 problem — the classic trap</h4>
+  <p>You fetch a list of parents, then loop and access a lazy child collection. Hibernate issues 1 query for the parents, then <strong>N more</strong> — one per parent — for the children.</p>
+
+  <pre><code>List&lt;Department&gt; depts = departmentRepo.findAll();  // 1 query
+for (Department d : depts) {
+    System.out.println(d.getEmployees().size());     // 1 query PER department!
+}
+// 10 departments = 11 queries. 1000 departments = 1001 queries.</code></pre>
+
+  <div class="callout bad">
+    <strong>How to spot it</strong>
+    Enable <code>spring.jpa.show-sql=true</code>. If you see a burst of similar SELECT statements after opening one endpoint — that's N+1.
+  </div>
+
+  <h4>Fix 1 — JOIN FETCH in JPQL</h4>
+  <pre><code>@Query("SELECT DISTINCT d FROM Department d JOIN FETCH d.employees")
+List&lt;Department&gt; findAllWithEmployees();
+// Now: 1 query returns everything.</code></pre>
+
+  <h4>Fix 2 — @EntityGraph (declarative)</h4>
+  <pre><code>@EntityGraph(attributePaths = {"employees"})
+List&lt;Department&gt; findAll();</code></pre>
+
+  <h4>Fix 3 — batch fetching</h4>
+  <pre><code>@BatchSize(size = 20)
+@OneToMany(mappedBy = "department")
+private List&lt;Employee&gt; employees;
+// Instead of N queries: N/20 queries.</code></pre>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Social media feed</span>
+    A social app loads 20 posts for the home feed. Each post has an author, likes count, and top 3 comments. Naive code triggers 20 × 3 = 60+ extra queries per page load. After adding <code>JOIN FETCH</code> for author and comments, page load time drops from 2.3s to 180ms.
+  </div>
+
+  <div class="callout good">
+    <strong>Rule of thumb</strong>
+    Always use <code>FetchType.LAZY</code> everywhere, then explicitly fetch what you need per query using <code>JOIN FETCH</code> or <code>@EntityGraph</code>. Never trust default EAGER.
+  </div>
+</section>
+
+<!-- ================= 8 ================= -->
+<section class="topic" id="t8">
+  <h2><span class="num">08</span> Introduction to Database Schema Versioning</h2>
+  <p class="tagline">Treat your database schema like source code — versioned, reviewed, reproducible.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> Every schema change is a file, checked into Git, applied in order.</div>
+    <div class="box"><span class="label">Why</span> Manual SQL on servers = drift, mystery bugs, disaster.</div>
+    <div class="box"><span class="label">How</span> Use tools like Flyway or Liquibase.</div>
+  </div>
+
+  <h4>The problem it solves</h4>
+  <p>Without versioning, DB changes look like this:</p>
+  <ul>
+    <li>Developer A runs an ALTER TABLE on their laptop — forgets to tell anyone.</li>
+    <li>Developer B pulls their code, tests fail on missing column, wastes 2 hours.</li>
+    <li>The change goes to staging via a Slack message: "hey run this SQL real quick."</li>
+    <li>Someone forgets to run it in production — deploy breaks at 2 AM.</li>
+  </ul>
+
+  <h4>With versioning</h4>
+  <ul>
+    <li>Every change is a file in the repo: <code>V12__add_customer_status_column.sql</code></li>
+    <li>The tool tracks which migrations have run in a special table.</li>
+    <li>Running <code>flyway migrate</code> (or letting Spring Boot auto-run) applies only new files, in order.</li>
+    <li>Every environment ends up with the exact same schema.</li>
+  </ul>
+
+  <h4>Two dominant tools</h4>
+  <table>
+    <tr><th>Feature</th><th>Flyway</th><th>Liquibase</th></tr>
+    <tr><td>Migration format</td><td>Plain SQL</td><td>XML, YAML, JSON, or SQL</td></tr>
+    <tr><td>Rollback</td><td>Paid feature</td><td>Free, built-in</td></tr>
+    <tr><td>Learning curve</td><td>Very easy</td><td>Steeper</td></tr>
+    <tr><td>Best for</td><td>Simple, SQL-first teams</td><td>Multi-DB, complex environments</td></tr>
+  </table>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Fintech startup</span>
+    A 30-engineer fintech pushes code 10+ times a day. Every migration is a numbered SQL file reviewed in a PR. When onboarding a new developer, they run <code>docker-compose up</code> and Flyway applies 187 migrations to bring the empty DB to the exact production state — in under 3 minutes.
+  </div>
+
+  <div class="callout info">
+    <strong>Core principle</strong>
+    Migrations are <em>append-only</em>. Once V5 has run in any environment, you never edit V5 — you write V6 to correct it.
+  </div>
+</section>
+
+<!-- ================= 9 ================= -->
+<section class="topic" id="t9">
+  <h2><span class="num">09</span> Flyway: Versioned and Repeatable Migrations</h2>
+  <p class="tagline">SQL files, numbered, applied in order — that's it.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> A tool that runs SQL files in a defined order and tracks what's done.</div>
+    <div class="box"><span class="label">Why</span> Simple, predictable, no XML fluff.</div>
+    <div class="box"><span class="label">How</span> Put files in <code>src/main/resources/db/migration/</code>.</div>
+  </div>
+
+  <h4>File naming — the golden rule</h4>
+  <ul>
+    <li><code>V1__create_users_table.sql</code> — Versioned. Runs <strong>once</strong>, in order.</li>
+    <li><code>V2__add_email_column.sql</code></li>
+    <li><code>V2.1__add_email_index.sql</code> — Dotted versions allowed.</li>
+    <li><code>R__refresh_user_view.sql</code> — Repeatable. Runs whenever its file checksum changes.</li>
+    <li><code>U1__undo_create_users.sql</code> — Undo (paid Teams edition).</li>
+  </ul>
+
+  <p>Format: <code>&lt;prefix&gt;&lt;version&gt;__&lt;description&gt;.sql</code> — note the <strong>double underscore</strong>.</p>
+
+  <h4>What happens on startup</h4>
+  <ol>
+    <li>Flyway connects to the DB.</li>
+    <li>It checks <code>flyway_schema_history</code> table for what's already applied.</li>
+    <li>It compares to the files it finds.</li>
+    <li>It applies missing files in version order, each in its own transaction.</li>
+    <li>It records success/failure with a checksum of the file's content.</li>
+  </ol>
+
+  <h4>Example migration file — V3__add_orders_table.sql</h4>
+  <pre><code>CREATE TABLE orders (
+    id           BIGSERIAL PRIMARY KEY,
+    user_id      BIGINT NOT NULL REFERENCES users(id),
+    total        NUMERIC(10, 2) NOT NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_orders_user_id ON orders(user_id);</code></pre>
+
+  <h4>Spring Boot config</h4>
+  <pre><code>spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+spring.flyway.baseline-on-migrate=true    # for pre-existing DBs</code></pre>
+
+  <h4>The schema history table</h4>
+  <p>Flyway creates and reads a table like this:</p>
+  <table>
+    <tr><th>version</th><th>description</th><th>checksum</th><th>installed_on</th><th>success</th></tr>
+    <tr><td>1</td><td>create users</td><td>-1839284</td><td>2026-01-15 09:12</td><td>true</td></tr>
+    <tr><td>2</td><td>add email column</td><td>2019485</td><td>2026-01-16 14:33</td><td>true</td></tr>
+  </table>
+
+  <div class="callout bad">
+    <strong>Never edit a migration that already ran anywhere.</strong>
+    Its checksum will change, Flyway will refuse to start, and someone has to manually run <code>flyway repair</code> at 3 AM.
+  </div>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Multi-region SaaS</span>
+    A SaaS deploys the same Spring Boot service to 4 regions (US, EU, APAC, LATAM), each with its own PostgreSQL. On every deployment, Flyway ensures the schema in every region matches — no more "US has column X but EU doesn't" incidents.
+  </div>
+</section>
+
+<!-- ================= 10 ================= -->
+<section class="topic" id="t10">
+  <h2><span class="num">10</span> Liquibase: Changelogs and Changesets</h2>
+  <p class="tagline">More power, more portable, and rollback comes free.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> A DB migration tool built around XML/YAML/JSON changelogs.</div>
+    <div class="box"><span class="label">Why</span> Works across DB vendors; declarative rollbacks; contexts/labels.</div>
+    <div class="box"><span class="label">How</span> Write changelog files; run <code>liquibase update</code>.</div>
+  </div>
+
+  <h4>Vocabulary</h4>
+  <ul>
+    <li><strong>Changelog</strong> — the master file (or the root of a chain). Contains a list of changesets.</li>
+    <li><strong>Changeset</strong> — a single atomic change, uniquely identified by <code>id</code> + <code>author</code> + filename.</li>
+    <li><strong>Change type</strong> — the actual operation: <code>createTable</code>, <code>addColumn</code>, <code>createIndex</code>, etc.</li>
+  </ul>
+
+  <h4>YAML example</h4>
+  <pre><code>databaseChangeLog:
+  - changeSet:
+      id: 001
+      author: sujal
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column: {name: id, type: bigint, autoIncrement: true, constraints: {primaryKey: true}}
+              - column: {name: email, type: varchar(255), constraints: {nullable: false, unique: true}}
+              - column: {name: created_at, type: timestamp, defaultValueComputed: CURRENT_TIMESTAMP}
+      rollback:
+        - dropTable:
+            tableName: users
+
+  - changeSet:
+      id: 002
+      author: sujal
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column: {name: last_login, type: timestamp}</code></pre>
+
+  <h4>Why the extra structure pays off</h4>
+  <ul>
+    <li><strong>Database-agnostic</strong> — <code>bigint</code> becomes <code>BIGINT</code> on Postgres, <code>NUMBER(19)</code> on Oracle.</li>
+    <li><strong>Rollback built in</strong> — most change types auto-generate the reverse; you can also supply explicit rollback SQL.</li>
+    <li><strong>Contexts</strong> — tag a changeset with <code>context: test</code> so seed data runs only in test environments.</li>
+    <li><strong>Preconditions</strong> — skip a changeset if a table already exists.</li>
+  </ul>
+
+  <h4>Tracking table</h4>
+  <p>Liquibase uses <code>DATABASECHANGELOG</code> to remember which changesets have run.</p>
+
+  <h4>Handy commands</h4>
+  <pre><code>liquibase update                       # apply pending changesets
+liquibase rollbackCount 3              # undo last 3 changesets
+liquibase rollbackToDate 2026-06-01    # revert to a point in time
+liquibase status                       # what's pending
+liquibase diff                         # compare two DBs</code></pre>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Enterprise with mixed DBs</span>
+    A large enterprise runs the same product on Oracle (legacy customers), PostgreSQL (new customers), and SQL Server (a regulated customer). Liquibase changelogs work across all three — the same changeset creates the right column type for each DB.
+  </div>
+</section>
+
+<!-- ================= 11 ================= -->
+<section class="topic" id="t11">
+  <h2><span class="num">11</span> Managing Migrations Across Environments</h2>
+  <p class="tagline">Same migrations, dev → staging → prod, no manual intervention.</p>
+
+  <h4>The 4-environment pipeline</h4>
+  <table>
+    <tr><th>Env</th><th>Purpose</th><th>When migrations run</th></tr>
+    <tr><td>Local</td><td>Developer laptop</td><td>App startup or manual</td></tr>
+    <tr><td>Dev / Integration</td><td>Shared team DB</td><td>On every merge to <code>main</code></td></tr>
+    <tr><td>Staging</td><td>Prod-like clone</td><td>On release-candidate build</td></tr>
+    <tr><td>Production</td><td>Live customers</td><td>Right before app deployment</td></tr>
+  </table>
+
+  <h4>Best practices</h4>
+  <ul>
+    <li><strong>Same file everywhere</strong> — never rewrite between environments. The <code>V5</code> that ran in dev is the exact <code>V5</code> that runs in prod.</li>
+    <li><strong>Run migrations from CI/CD</strong>, not from a developer's laptop.</li>
+    <li><strong>Test each migration against a prod-sized dataset</strong> in staging before prod.</li>
+    <li><strong>Always take a DB backup</strong> right before running prod migrations.</li>
+    <li><strong>Use contexts/profiles for env-specific data</strong>: dev/test seed data lives in <code>context: test</code>; it never runs in prod.</li>
+    <li><strong>Baseline existing prod databases</strong> — set <code>baseline-on-migrate=true</code> once so Flyway/Liquibase knows the current state is the starting point.</li>
+  </ul>
+
+  <h4>Order of operations in a deployment</h4>
+  <ol>
+    <li>Build the app image.</li>
+    <li>Backup production DB.</li>
+    <li>Run migrations (safe, non-breaking ones only — see topic 13).</li>
+    <li>Roll out new app pods gradually.</li>
+    <li>Verify health checks.</li>
+    <li>If needed, run any "cleanup" migrations after the app is stable.</li>
+  </ol>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — GitHub Actions pipeline</span>
+    On merge to <code>main</code>: GitHub Actions spins up a Postgres container, restores a sanitized prod snapshot, runs all Flyway migrations, then runs the full integration test suite. Only if this passes does the same set of migrations reach production the next day.
+  </div>
+
+  <div class="callout good">
+    <strong>Golden rule</strong>
+    The migration file that reached production was reviewed in a pull request, applied in dev, tested in staging, and applied to prod — in that exact order, without edits.
+  </div>
+</section>
+
+<!-- ================= 12 ================= -->
+<section class="topic" id="t12">
+  <h2><span class="num">12</span> Rolling Back and Handling Failed Migrations</h2>
+  <p class="tagline">"Undo" for databases is trickier than you think.</p>
+
+  <h4>Two philosophies</h4>
+  <table>
+    <tr><th>Strategy</th><th>What you do</th><th>Trade-off</th></tr>
+    <tr><td><strong>Rollback</strong></td><td>Run the reverse migration to undo the change</td><td>Can't recover dropped columns/rows — data loss</td></tr>
+    <tr><td><strong>Fix-forward</strong></td><td>Write a new migration to correct the problem</td><td>Everything stays in git history, always safe</td></tr>
+  </table>
+
+  <div class="callout good">
+    <strong>Most teams prefer fix-forward in production.</strong>
+    A rolled-back migration in Liquibase doesn't bring back the data you deleted; a new "fix" migration does not pretend the past didn't happen.
+  </div>
+
+  <h4>Rollback options</h4>
+  <ul>
+    <li><strong>Liquibase</strong>: <code>liquibase rollbackCount 1</code>, <code>rollbackToTag</code>, or <code>rollbackToDate</code>. Free.</li>
+    <li><strong>Flyway</strong>: Undo migrations in Teams (paid) edition; otherwise a manual "V+1" fix.</li>
+    <li><strong>Full DB restore from backup</strong>: last resort, causes downtime.</li>
+  </ul>
+
+  <h4>When a migration fails partway</h4>
+  <ul>
+    <li><strong>PostgreSQL</strong>: DDL is transactional; a failure auto-rolls back everything in that migration.</li>
+    <li><strong>MySQL &lt; 8.0</strong>: DDL is <em>not</em> transactional. Half your CREATE INDEX might have run before the failure — you'll need to inspect and clean up.</li>
+    <li><strong>Flyway repair</strong>: <code>flyway repair</code> fixes the history table when a failed migration blocks further attempts.</li>
+    <li>Fix the underlying SQL, re-run.</li>
+  </ul>
+
+  <h4>Rollback-safe migrations — a checklist</h4>
+  <ul>
+    <li>Never drop a column in the same release the app stops writing to it.</li>
+    <li>Never rename a table in a single step.</li>
+    <li>Prefer <code>ALTER TABLE ADD</code> (safe) over <code>ALTER TABLE DROP</code> (destructive).</li>
+    <li>Split risky changes into expand → migrate → contract (next topic).</li>
+  </ul>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Startup crisis avoided</span>
+    A team deploys a "cleanup" migration that drops an "unused" column — turns out a legacy reporting job still needed it. Instead of rolling back (which wouldn't restore the data anyway), they restore the column from last night's backup with a new V-migration, then write a follow-up patch to fix the reporting job. Total downtime: 12 minutes.
+  </div>
+</section>
+
+<!-- ================= 13 ================= -->
+<section class="topic" id="t13">
+  <h2><span class="num">13</span> Zero-Downtime Schema Changes (Expand/Contract)</h2>
+  <p class="tagline">Change the schema while millions of users are using the app.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> A 3-phase pattern for breaking schema changes.</div>
+    <div class="box"><span class="label">Why</span> Traditional "stop the app, change the schema, start it again" causes downtime.</div>
+    <div class="box"><span class="label">How</span> Expand → Migrate → Contract, deployed separately.</div>
+  </div>
+
+  <h4>The problem</h4>
+  <p>If you rename <code>username</code> to <code>user_name</code> in one migration and deploy the new app at the same time:</p>
+  <ul>
+    <li>Old app instances still write to <code>username</code> — crash.</li>
+    <li>New app instances read from <code>user_name</code> — data is missing.</li>
+    <li>Rollback is a nightmare.</li>
+  </ul>
+
+  <h4>The pattern — 3 deployments</h4>
+
+  <p><strong>Phase 1 — EXPAND</strong> (additive changes only)</p>
+  <ul>
+    <li>Add the new column <code>user_name</code>.</li>
+    <li>Old app keeps working — it doesn't know about the new column.</li>
+    <li>DB is now "backwards compatible."</li>
+  </ul>
+
+  <p><strong>Phase 2 — MIGRATE (dual-write / backfill)</strong></p>
+  <ul>
+    <li>Deploy app code that writes to <em>both</em> old and new columns.</li>
+    <li>Backfill existing rows: <code>UPDATE users SET user_name = username</code>.</li>
+    <li>Deploy code that reads from the new column, still writes to both.</li>
+    <li>Verify no writes are missing on either side.</li>
+  </ul>
+
+  <p><strong>Phase 3 — CONTRACT</strong></p>
+  <ul>
+    <li>Deploy app code that stops using the old column.</li>
+    <li>Wait a "safety window" — often days — in case rollback is needed.</li>
+    <li>Drop the old column.</li>
+  </ul>
+
+  <h4>A concrete example — renaming a column</h4>
+  <pre><code>-- V10: EXPAND
+ALTER TABLE users ADD COLUMN user_name VARCHAR(100);
+
+-- Deploy app v2 that writes both:
+-- INSERT ... (username, user_name) VALUES (?, ?)
+
+-- V11: BACKFILL
+UPDATE users SET user_name = username WHERE user_name IS NULL;
+
+-- Deploy app v3 that reads user_name only, still writes both.
+-- Deploy app v4 that stops writing to username.
+
+-- V12: CONTRACT (after days of confirmed stability)
+ALTER TABLE users DROP COLUMN username;</code></pre>
+
+  <h4>Common expand/contract scenarios</h4>
+  <table>
+    <tr><th>Change</th><th>How to do it safely</th></tr>
+    <tr><td>Rename column</td><td>Add new → dual-write → switch reads → drop old</td></tr>
+    <tr><td>Change column type</td><td>Add new-typed column → migrate values → switch code → drop old</td></tr>
+    <tr><td>Split table</td><td>Create new tables → dual-write → migrate → switch reads → drop old</td></tr>
+    <tr><td>Add NOT NULL column</td><td>Add nullable → backfill → set NOT NULL</td></tr>
+  </table>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Netflix, GitHub, banks</span>
+    Any service that can't afford downtime uses expand/contract. GitHub famously renamed the "master" branch column to "default_branch" using this pattern over several weeks, never taking the service offline.
+  </div>
+
+  <div class="callout warn">
+    <strong>Trade-off</strong>
+    Zero-downtime = more deployments, more code complexity (dual-writes), more discipline. Only use for services where downtime is genuinely unacceptable.
+  </div>
+</section>
+
+<!-- ================= 14 ================= -->
+<section class="topic" id="t14">
+  <h2><span class="num">14</span> Data Migration and ETL Considerations</h2>
+  <p class="tagline">Moving data — not just structure — from one place to another.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> Bulk-moving data from a source to a target, with transformations.</div>
+    <div class="box"><span class="label">Why</span> Old system retiring, warehouse loading, table splits, replatforms.</div>
+    <div class="box"><span class="label">How</span> ETL pipelines: Extract, Transform, Load.</div>
+  </div>
+
+  <h4>What is ETL?</h4>
+  <table>
+    <tr><th>Step</th><th>What it does</th><th>Example</th></tr>
+    <tr><td><strong>Extract</strong></td><td>Read data from source (DB, CSV, API, file)</td><td>Dump 20M rows from legacy Oracle</td></tr>
+    <tr><td><strong>Transform</strong></td><td>Clean, reshape, enrich, deduplicate</td><td>Parse dates, split full name into first/last, drop test rows</td></tr>
+    <tr><td><strong>Load</strong></td><td>Insert into the target</td><td>Bulk insert into PostgreSQL analytics DB</td></tr>
+  </table>
+
+  <p>You may also see <strong>ELT</strong> — extract, load raw, then transform inside the warehouse (common with Snowflake / BigQuery).</p>
+
+  <h4>Key considerations</h4>
+  <ul>
+    <li><strong>Volume</strong> — 1000 rows fits in RAM. 1 billion rows needs streaming/batching.</li>
+    <li><strong>Downtime tolerance</strong> — can the source be frozen during migration? If not, plan for change data capture (CDC).</li>
+    <li><strong>Data quality</strong> — dirty data (NULLs, bad formats) causes migrations to fail halfway.</li>
+    <li><strong>Idempotency</strong> — re-running the pipeline must produce the same result, not duplicates.</li>
+    <li><strong>Referential integrity</strong> — load parents before children.</li>
+    <li><strong>Progress tracking</strong> — log rows processed, failed, skipped.</li>
+  </ul>
+
+  <h4>Batching pattern</h4>
+  <pre><code>long lastId = 0;
+final int batchSize = 5000;
+
+while (true) {
+    List&lt;Row&gt; batch = source.fetch(lastId, batchSize);
+    if (batch.isEmpty()) break;
+
+    List&lt;Row&gt; transformed = batch.stream().map(this::transform).toList();
+    target.bulkInsert(transformed);
+
+    lastId = batch.get(batch.size() - 1).getId();
+    log("Migrated up to id " + lastId);
+}</code></pre>
+
+  <h4>Common tools</h4>
+  <ul>
+    <li><strong>Spring Batch</strong> — Java-native chunked processing with restart, retry.</li>
+    <li><strong>Apache NiFi / Airflow</strong> — visual/DAG pipeline orchestration.</li>
+    <li><strong>AWS DMS, Google DMS</strong> — cloud-managed DB migration.</li>
+    <li><strong>Airbyte / Fivetran</strong> — pre-built connectors for hundreds of sources.</li>
+    <li><strong>Debezium</strong> — change data capture (CDC) via DB logs.</li>
+  </ul>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Retail moves to a data lake</span>
+    A retailer with 15 years of sales history in Oracle wants Snowflake for analytics. They set up Debezium to stream changes to Kafka, a Spark job transforms and loads into Snowflake. Historical backfill takes 3 days; the live stream keeps Snowflake in sync forever. Analysts get 100× faster reports.
+  </div>
+</section>
+
+<!-- ================= 15 ================= -->
+<section class="topic" id="t15">
+  <h2><span class="num">15</span> Migrating Between Database Engines</h2>
+  <p class="tagline">Oracle → PostgreSQL, MySQL → Aurora, SQL Server → Postgres.</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> Changing the DB vendor while keeping the same data.</div>
+    <div class="box"><span class="label">Why</span> Cost, licensing, cloud-native features, vendor lock-in.</div>
+    <div class="box"><span class="label">How</span> Convert schema, copy data, adapt SQL, cutover.</div>
+  </div>
+
+  <h4>What can go wrong — the "surprise list"</h4>
+  <table>
+    <tr><th>Category</th><th>Example difference</th></tr>
+    <tr><td>Data types</td><td>MySQL <code>TINYINT(1)</code> = Postgres <code>BOOLEAN</code>; Oracle <code>NUMBER</code> = many possible target types</td></tr>
+    <tr><td>Auto-increment</td><td>MySQL <code>AUTO_INCREMENT</code> vs Postgres <code>SERIAL</code> / <code>IDENTITY</code> vs Oracle sequences</td></tr>
+    <tr><td>Pagination</td><td>MySQL/Postgres <code>LIMIT/OFFSET</code> vs Oracle <code>ROWNUM</code> / <code>FETCH FIRST</code></td></tr>
+    <tr><td>Case sensitivity</td><td>Oracle: uppercase identifiers by default; Postgres: lowercase, case-sensitive if quoted</td></tr>
+    <tr><td>Booleans</td><td>Oracle has no native boolean type — usually stored as CHAR(1) or NUMBER(1)</td></tr>
+    <tr><td>String functions</td><td><code>CONCAT</code>, <code>SUBSTR</code>, <code>NVL</code> vs <code>COALESCE</code></td></tr>
+    <tr><td>Date/time</td><td>Different formats, time zones, functions (<code>SYSDATE</code>, <code>NOW()</code>, <code>GETDATE()</code>)</td></tr>
+    <tr><td>Stored procs / triggers</td><td>PL/SQL vs PL/pgSQL vs T-SQL — usually rewritten by hand</td></tr>
+    <tr><td>Character sets</td><td>UTF-8 vs Latin1 vs UCS2 — data loss possible if mismatched</td></tr>
+    <tr><td>Isolation defaults</td><td>Oracle default is stronger than MySQL's</td></tr>
+  </table>
+
+  <h4>A safe migration approach</h4>
+  <ol>
+    <li><strong>Assessment</strong> — inventory all stored procs, triggers, views, unusual SQL.</li>
+    <li><strong>Schema conversion</strong> — use a tool (AWS SCT, Ora2Pg) as a first pass, then hand-fix.</li>
+    <li><strong>Data copy</strong> — bulk load (COPY, LOAD DATA INFILE) is 10–100× faster than row-by-row.</li>
+    <li><strong>Application adaptation</strong> — swap dialect, JDBC driver, any raw SQL. If you're using JPA, most of this is free — just change the Hibernate dialect.</li>
+    <li><strong>Testing</strong> — run the full test suite against the new DB.</li>
+    <li><strong>Dual-write cutover</strong> (for zero downtime): write to both DBs, gradually switch reads, decommission old DB.</li>
+  </ol>
+
+  <h4>Why JPA helps enormously</h4>
+  <p>Apps built on JPA / Hibernate often need only a config change to swap DBs:</p>
+  <pre><code>spring.datasource.url=jdbc:postgresql://.../shop
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+# (was): org.hibernate.dialect.MySQLDialect</code></pre>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Skipping Oracle license fees</span>
+    A mid-size company migrates from Oracle to PostgreSQL to save $2M/year in licensing. They use AWS DMS for a continuous data copy during a 2-month dual-run period. Their JPA-based app changed one config line; their 400+ stored procedures took 3 months to port to PL/pgSQL — the real work.
+  </div>
+</section>
+
+<!-- ================= 16 ================= -->
+<section class="topic" id="t16">
+  <h2><span class="num">16</span> Validating Data Integrity Post-Migration</h2>
+  <p class="tagline">Answering the question: "Did we actually move everything correctly?"</p>
+
+  <div class="why-what-how">
+    <div class="box"><span class="label">What</span> Systematic checks to prove source and target data match.</div>
+    <div class="box"><span class="label">Why</span> Silent data loss is the worst kind of bug — it's discovered months later.</div>
+    <div class="box"><span class="label">How</span> Counts, checksums, sampling, business-rule validation.</div>
+  </div>
+
+  <h4>Layered validation strategy</h4>
+  <ol>
+    <li><strong>Row counts</strong> — quickest, catches missing tables/rows.</li>
+    <li><strong>Aggregates</strong> — sums of amounts, min/max of dates, distinct counts.</li>
+    <li><strong>Checksums / hashes</strong> — hash key columns per row and compare.</li>
+    <li><strong>Random sampling</strong> — pick 1000 random rows, compare byte-by-byte.</li>
+    <li><strong>Referential integrity</strong> — no orphan foreign keys.</li>
+    <li><strong>Business rules</strong> — every order has ≥ 1 item; every user has a valid email format.</li>
+    <li><strong>Application smoke tests</strong> — critical user journeys work end-to-end.</li>
+  </ol>
+
+  <h4>Sample validation SQL</h4>
+  <pre><code>-- Row counts
+SELECT COUNT(*) FROM source.orders;
+SELECT COUNT(*) FROM target.orders;
+
+-- Financial totals — must match to the cent
+SELECT SUM(amount) FROM source.transactions;
+SELECT SUM(amount) FROM target.transactions;
+
+-- No orphaned foreign keys
+SELECT COUNT(*) FROM target.orders o
+LEFT JOIN target.users u ON o.user_id = u.id
+WHERE u.id IS NULL;
+
+-- Checksums (Postgres example)
+SELECT MD5(STRING_AGG(id::text || email, ',' ORDER BY id))
+FROM users;</code></pre>
+
+  <h4>Automated validation tools</h4>
+  <ul>
+    <li><strong>AWS DMS validation</strong> — built-in row-by-row compare.</li>
+    <li><strong>Great Expectations</strong> — declarative data-quality checks (row counts, ranges, uniqueness).</li>
+    <li><strong>dbt tests</strong> — add <code>not_null</code>, <code>unique</code>, <code>relationships</code> tests in YAML.</li>
+    <li><strong>Custom scripts</strong> — Python/Java jobs comparing hashes.</li>
+  </ul>
+
+  <h4>Best practices</h4>
+  <ul>
+    <li>Keep the old DB <strong>read-only</strong> for a rollback window (days to weeks).</li>
+    <li>Run validation both <strong>immediately</strong> after migration and <strong>after the first business day</strong>.</li>
+    <li>Involve the business team — they know which totals must never change.</li>
+    <li>Document every discrepancy found, even if small.</li>
+  </ul>
+
+  <div class="real-world">
+    <span class="label">Real-World Use Case — Bank ledger migration</span>
+    A bank moves 500M ledger rows to a new system. Validation includes: (1) row count per branch, (2) sum of all debits = sum of all credits (must be exactly zero), (3) daily closing balance per account matches source to the paisa. They keep the old system in read-only mode for 6 months. Two subtle rounding bugs are caught in month 2 and patched with fix-forward migrations.
+  </div>
+
+  <div class="callout good">
+    <strong>Success criteria</strong>
+    Migration is only "done" when: counts match, sums match, checksums match, foreign keys are clean, and the app has run cleanly in production for one full business cycle.
+  </div>
+</section>
+
+<footer>
+  Detailed study notes — Database Schema Migration &amp; Data Persistence
+</footer>
+
+</div>
+</body>
+</html>

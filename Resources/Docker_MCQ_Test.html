@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker MCQ Test - 50 Questions</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #0d1b2a, #1b263b);
+    color: #e0e1dd;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 900px; margin: auto; }
+  header {
+    background: linear-gradient(135deg, #0db7ed, #066da5);
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(13,183,237,0.3);
+  }
+  header h1 { color: #fff; font-size: 2.2em; }
+  header p { color: #e0f7ff; margin-top: 6px; }
+
+  .stats-bar {
+    display: flex;
+    justify-content: space-between;
+    background: #1b263b;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 1px solid #415a77;
+  }
+  .stat { text-align: center; }
+  .stat-label { color: #778da9; font-size: 0.85em; }
+  .stat-value { color: #0db7ed; font-size: 1.5em; font-weight: bold; }
+  .stat-value.correct { color: #2a9d8f; }
+  .stat-value.wrong { color: #e76f51; }
+
+  .progress-bar {
+    height: 8px;
+    background: #0d1b2a;
+    border-radius: 4px;
+    margin: 10px 0 20px 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0db7ed, #2a9d8f);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .question-card {
+    background: #1b263b;
+    padding: 22px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    border-left: 4px solid #0db7ed;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  .question-title {
+    color: #f4a261;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+  .q-num { color: #0db7ed; margin-right: 6px; }
+
+  .options { display: grid; gap: 10px; }
+  .option {
+    background: #0d1b2a;
+    padding: 12px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.25s;
+    border: 2px solid transparent;
+    color: #d4d4d4;
+  }
+  .option:hover { background: #2a3f5f; border-color: #0db7ed; }
+  .option.selected { border-color: #0db7ed; background: #14395a; }
+  .option.correct {
+    background: #2a9d8f !important;
+    color: #fff;
+    border-color: #2a9d8f;
+    animation: pop 0.3s ease;
+  }
+  .option.wrong {
+    background: #e76f51 !important;
+    color: #fff;
+    border-color: #e76f51;
+  }
+  .option.disabled { cursor: not-allowed; opacity: 0.85; }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+  }
+
+  .explanation {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    background: #14395a;
+    border-left: 3px solid #f4a261;
+    border-radius: 6px;
+    color: #e0e1dd;
+    font-size: 0.95em;
+  }
+  .explanation.show { display: block; }
+  .explanation strong { color: #f4a261; }
+
+  code {
+    background: #0d1b2a;
+    color: #f4a261;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9em;
+  }
+
+  .footer-controls {
+    text-align: center;
+    padding: 25px;
+    background: #1b263b;
+    border-radius: 10px;
+    margin-top: 20px;
+  }
+  button {
+    background: #0db7ed;
+    color: #0d1b2a;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    margin: 5px;
+  }
+  button:hover { background: #f4a261; transform: translateY(-2px); }
+
+  .result-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+  }
+  .result-modal.show { display: flex; }
+  .result-box {
+    background: #1b263b;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 500px;
+    border: 2px solid #0db7ed;
+    box-shadow: 0 10px 40px rgba(13,183,237,0.4);
+  }
+  .result-box h2 { color: #0db7ed; margin-bottom: 15px; font-size: 2em; }
+  .result-score { font-size: 3.5em; font-weight: bold; margin: 15px 0; }
+  .result-msg { color: #d4d4d4; margin-bottom: 20px; font-size: 1.1em; }
+  .difficulty {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    margin-left: 8px;
+    font-weight: bold;
+  }
+  .diff-easy { background: #2a9d8f; color: #fff; }
+  .diff-med { background: #f4a261; color: #0d1b2a; }
+  .diff-hard { background: #e76f51; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <h1>🐳 Docker MCQ Test</h1>
+  <p>50 Questions | Mixed Difficulty | Interactive Practice</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-label">Attempted</div>
+    <div class="stat-value" id="attempted">0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Correct</div>
+    <div class="stat-value correct" id="correct">0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Wrong</div>
+    <div class="stat-value wrong" id="wrong">0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Score</div>
+    <div class="stat-value" id="score">0 / 50</div>
+  </div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<div id="quiz"></div>
+
+<div class="footer-controls">
+  <button onclick="showResult()">📊 Show Final Result</button>
+  <button onclick="resetQuiz()">🔄 Restart Quiz</button>
+</div>
+
+</div>
+
+<div class="result-modal" id="modal">
+  <div class="result-box">
+    <h2 id="resultTitle">🎉 Quiz Completed!</h2>
+    <div class="result-score" id="resultScore">0 / 50</div>
+    <div class="result-msg" id="resultMsg">Great effort!</div>
+    <button onclick="closeModal()">Review Answers</button>
+    <button onclick="resetQuiz()">Try Again</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {q:"What is Docker?", opts:["A virtual machine hypervisor","An open-source containerization platform","A programming language","A cloud service provider"], a:1, d:"easy", ex:"Docker is an open-source platform for developing, shipping, and running applications in containers."},
+  {q:"Which command is used to list all running Docker containers?", opts:["docker list","docker ps","docker ls","docker containers"], a:1, d:"easy", ex:"docker ps shows currently running containers. Add -a to see all including stopped."},
+  {q:"What is a Docker image?", opts:["A running container","A read-only template used to create containers","A network configuration","A storage volume"], a:1, d:"easy", ex:"An image is a read-only template with the instructions for creating a container."},
+  {q:"Which file is used to define instructions for building a Docker image?", opts:["docker.yml","Dockerfile","container.conf","image.txt"], a:1, d:"easy", ex:"A Dockerfile is a text document containing all commands to assemble an image."},
+  {q:"Which command builds an image from a Dockerfile?", opts:["docker create","docker build","docker make","docker compile"], a:1, d:"easy", ex:"docker build -t name:tag . builds an image from the Dockerfile in current directory."},
+  {q:"What is the default Docker registry?", opts:["Docker Cloud","AWS ECR","Docker Hub","GitHub"], a:2, d:"easy", ex:"Docker Hub (hub.docker.com) is the default public registry for Docker images."},
+  {q:"Which instruction in a Dockerfile sets the base image?", opts:["BASE","FROM","IMAGE","START"], a:1, d:"easy", ex:"FROM must be the first instruction (except ARG) and specifies the base image."},
+  {q:"What does the -d flag do in docker run?", opts:["Delete container after exit","Run in detached (background) mode","Debug mode","Download image only"], a:1, d:"easy", ex:"-d runs the container in detached mode (background)."},
+  {q:"Which command downloads an image from Docker Hub?", opts:["docker get","docker download","docker pull","docker fetch"], a:2, d:"easy", ex:"docker pull image:tag downloads an image from a registry."},
+  {q:"How do you map port 8080 on the host to port 80 in the container?", opts:["-p 80:8080","-p 8080:80","--port 8080-80","-e 8080:80"], a:1, d:"easy", ex:"Format is -p HOST:CONTAINER, so -p 8080:80 maps host 8080 to container 80."},
+
+  {q:"Which command is used to stop a running container gracefully?", opts:["docker kill","docker halt","docker stop","docker end"], a:2, d:"easy", ex:"docker stop sends SIGTERM then SIGKILL after grace period. docker kill sends SIGKILL immediately."},
+  {q:"What is the difference between CMD and ENTRYPOINT in a Dockerfile?", opts:["They are identical","CMD is overridable at runtime; ENTRYPOINT defines the main command","ENTRYPOINT runs first, then CMD","CMD only runs during build"], a:1, d:"med", ex:"CMD provides defaults that can be overridden. ENTRYPOINT defines the executable that always runs."},
+  {q:"Which of these is NOT a valid Docker network driver?", opts:["bridge","overlay","virtual","macvlan"], a:2, d:"med", ex:"Valid drivers include bridge, host, none, overlay, macvlan. 'virtual' is not a Docker network driver."},
+  {q:"What is the purpose of a .dockerignore file?", opts:["Ignore Docker warnings","Specify files to exclude from build context","Skip container logs","Hide environment variables"], a:1, d:"med", ex:".dockerignore excludes files/dirs from being sent to the Docker daemon during build."},
+  {q:"Which command shows the layers of a Docker image?", opts:["docker layers","docker history","docker inspect","docker log"], a:1, d:"med", ex:"docker history &lt;image&gt; shows the history and layers of an image."},
+  {q:"What is Docker Compose primarily used for?", opts:["Building a single image","Defining and running multi-container applications","Managing cloud deployments","Monitoring containers"], a:1, d:"easy", ex:"Docker Compose uses a YAML file to define and run multi-container Docker applications."},
+  {q:"Which file does Docker Compose use by default?", opts:["compose.json","dockerfile.yml","docker-compose.yml","services.conf"], a:2, d:"easy", ex:"docker-compose.yml (or compose.yaml) is the default configuration file."},
+  {q:"What does the EXPOSE instruction do in a Dockerfile?", opts:["Publishes the port to the host","Documents which ports the container listens on","Opens firewall rules","Encrypts the port"], a:1, d:"med", ex:"EXPOSE is documentation. To publish the port, you must use -p or -P with docker run."},
+  {q:"Which command removes a Docker container?", opts:["docker delete","docker rm","docker remove","docker erase"], a:1, d:"easy", ex:"docker rm removes stopped containers. Use -f to force-remove running ones."},
+  {q:"Which command removes an image?", opts:["docker rm","docker rmi","docker delete-image","docker clean"], a:1, d:"easy", ex:"docker rmi (remove image) deletes one or more images."},
+
+  {q:"What is a Docker volume?", opts:["A CPU limit","A persistent storage mechanism managed by Docker","A memory allocation","A container clone"], a:1, d:"easy", ex:"Volumes are the preferred way to persist data generated by and used by Docker containers."},
+  {q:"How do you create a named volume 'data'?", opts:["docker create volume data","docker volume create data","docker vol data","docker new volume data"], a:1, d:"easy", ex:"docker volume create &lt;name&gt; creates a named volume."},
+  {q:"Which flag mounts a volume into a container?", opts:["-m","-v","--vol","-s"], a:1, d:"easy", ex:"-v host_or_volume:container_path mounts volumes. --mount is the newer, more explicit syntax."},
+  {q:"What is a multi-stage build?", opts:["Building multiple images at once","Using multiple FROM statements in a Dockerfile to produce a smaller final image","Running builds in parallel","Building with multiple developers"], a:1, d:"med", ex:"Multi-stage builds use multiple FROM instructions; only artifacts from the final stage remain in the image."},
+  {q:"Which command is used to log in to Docker Hub?", opts:["docker signin","docker login","docker authenticate","docker connect"], a:1, d:"easy", ex:"docker login logs you into a registry (Docker Hub by default)."},
+  {q:"What does 'latest' refer to in Docker image tags?", opts:["The most recently pushed version","A default tag when none is specified","Always the newest stable release","The container's runtime version"], a:1, d:"med", ex:"'latest' is just a default tag name. It does NOT necessarily point to the newest version — it's whatever was tagged as 'latest'."},
+  {q:"Which command shows real-time resource usage of containers?", opts:["docker top","docker stats","docker monitor","docker usage"], a:1, d:"med", ex:"docker stats shows live CPU, memory, network, and disk I/O usage."},
+  {q:"What does the ARG instruction do in a Dockerfile?", opts:["Defines runtime arguments","Defines build-time variables","Sets container arguments","Configures ARM architecture"], a:1, d:"med", ex:"ARG defines a variable that users can pass at build-time with --build-arg."},
+  {q:"How is ENV different from ARG?", opts:["They are the same","ENV persists in the running container; ARG is only available at build time","ARG is more secure","ENV is deprecated"], a:1, d:"med", ex:"ENV variables persist as environment variables in the container; ARG only exists during the build."},
+  {q:"Which is the correct way to run an interactive shell in a running container?", opts:["docker run bash","docker exec -it &lt;id&gt; bash","docker shell &lt;id&gt;","docker attach bash"], a:1, d:"easy", ex:"docker exec -it enters a running container. -i keeps stdin open, -t allocates a TTY."},
+
+  {q:"What is Docker Swarm?", opts:["A container security tool","Docker's native cluster and orchestration tool","A container registry","A Dockerfile linter"], a:1, d:"med", ex:"Docker Swarm is Docker's built-in tool for managing a cluster of Docker engines."},
+  {q:"Which command initializes a Docker Swarm?", opts:["docker cluster init","docker swarm init","docker init swarm","docker start swarm"], a:1, d:"med", ex:"docker swarm init initializes a Swarm on the current node as manager."},
+  {q:"In Swarm, what is a 'service'?", opts:["A single container","The definition of tasks to execute on manager/worker nodes","A network","A volume"], a:1, d:"hard", ex:"A service is the definition of the tasks to execute; each task is a container running somewhere in the swarm."},
+  {q:"Which network driver is used for multi-host container communication in Swarm?", opts:["bridge","overlay","host","macvlan"], a:1, d:"med", ex:"overlay networks allow containers on different Docker hosts to communicate in a swarm."},
+  {q:"What is the default network driver when you run docker run without specifying a network?", opts:["host","none","bridge","overlay"], a:2, d:"med", ex:"By default, containers connect to the default bridge network."},
+  {q:"Which command shows detailed information about a Docker object?", opts:["docker info","docker inspect","docker describe","docker show"], a:1, d:"easy", ex:"docker inspect returns JSON with low-level details of containers, images, volumes, or networks."},
+  {q:"What happens if you don't specify a tag when pulling an image?", opts:["Error is thrown","'latest' tag is used","Random tag is chosen","Most recent version is used"], a:1, d:"easy", ex:"If no tag is specified, Docker defaults to the 'latest' tag."},
+  {q:"Which restart policy restarts a container only if it exits with a non-zero status?", opts:["always","unless-stopped","on-failure","no"], a:2, d:"med", ex:"on-failure restarts only on non-zero exit codes. You can specify max attempts too."},
+  {q:"How can you copy a file from your host to a running container?", opts:["docker copy","docker cp","docker move","docker transfer"], a:1, d:"med", ex:"docker cp source container:destination copies files between host and container."},
+  {q:"Which of these is a Docker cleanup command?", opts:["docker clean","docker system prune","docker gc","docker vacuum"], a:1, d:"med", ex:"docker system prune removes unused data (containers, networks, images, cache)."},
+
+  {q:"What port does the Docker daemon typically listen on for TCP connections?", opts:["2375 (unencrypted) / 2376 (TLS)","8080","443","22"], a:0, d:"hard", ex:"Docker daemon listens on 2375 for unencrypted TCP and 2376 for TLS. UNIX socket by default."},
+  {q:"Which of the following is TRUE about Docker containers vs VMs?", opts:["Containers include a full OS","Containers share the host OS kernel","VMs are lighter than containers","Containers can't be isolated"], a:1, d:"med", ex:"Containers share the host kernel and are lighter than VMs which include a full guest OS."},
+  {q:"What does the HEALTHCHECK instruction do?", opts:["Scans the image for vulnerabilities","Defines a test to check if a container is still working","Restarts the container automatically","Monitors CPU usage"], a:1, d:"hard", ex:"HEALTHCHECK tells Docker how to test a container to check that it's working correctly."},
+  {q:"Which of these is the correct order of a container's lifecycle?", opts:["created → running → paused → stopped","running → created → stopped","stopped → created → running","created → paused → running"], a:0, d:"med", ex:"Container lifecycle: created → running → (paused) → stopped → removed."},
+  {q:"What is the effect of the --rm flag with docker run?", opts:["Removes existing container with same name","Automatically removes the container when it exits","Removes the image after use","Forces removal of volumes"], a:1, d:"med", ex:"--rm auto-removes the container and its anonymous volumes when it exits."},
+  {q:"Which command lists all Docker networks?", opts:["docker net ls","docker network list","docker network ls","docker networks"], a:2, d:"easy", ex:"docker network ls lists all networks on the Docker host."},
+  {q:"In docker-compose.yml, which key defines service dependencies?", opts:["requires","needs","depends_on","after"], a:2, d:"med", ex:"depends_on specifies startup order dependencies between services in Compose."},
+  {q:"What does 'docker system prune -a' do?", opts:["Removes only stopped containers","Removes all unused containers, networks, images (including unused ones), and cache","Restarts the Docker daemon","Removes all volumes"], a:1, d:"hard", ex:"-a also removes unused images (not just dangling ones). Add --volumes to also remove unused volumes."},
+  {q:"Which of these best describes a container image layer?", opts:["A running process","A read-only file system change stacked with others to form the image","A network interface","A single file"], a:1, d:"hard", ex:"Docker images consist of layered read-only file systems combined via a union filesystem (e.g., overlay2)."},
+  {q:"Which command shows logs from a container?", opts:["docker output","docker logs","docker view","docker tail"], a:1, d:"easy", ex:"docker logs &lt;container&gt; shows the container's stdout/stderr logs. Add -f to follow."}
+];
+
+const quiz = document.getElementById('quiz');
+let stats = { attempted: 0, correct: 0, wrong: 0 };
+
+function difficultyBadge(d) {
+  if (d === 'easy') return '<span class="difficulty diff-easy">EASY</span>';
+  if (d === 'med')  return '<span class="difficulty diff-med">MEDIUM</span>';
+  return '<span class="difficulty diff-hard">HARD</span>';
+}
+
+function renderQuiz() {
+  quiz.innerHTML = '';
+  questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.innerHTML = `
+      <div class="question-title"><span class="q-num">Q${i+1}.</span>${q.q}${difficultyBadge(q.d)}</div>
+      <div class="options" id="opts-${i}">
+        ${q.opts.map((opt, j) => `<div class="option" onclick="pick(${i}, ${j})">${String.fromCharCode(65+j)}. ${opt}</div>`).join('')}
+      </div>
+      <div class="explanation" id="ex-${i}"><strong>Explanation:</strong> ${q.ex}</div>
+    `;
+    quiz.appendChild(card);
+  });
+}
+
+function pick(qIdx, oIdx) {
+  const optsEl = document.getElementById(`opts-${qIdx}`);
+  if (optsEl.dataset.answered === 'true') return;
+  optsEl.dataset.answered = 'true';
+
+  const options = optsEl.children;
+  const correct = questions[qIdx].a;
+
+  for (let i = 0; i < options.length; i++) {
+    options[i].classList.add('disabled');
+    options[i].onclick = null;
+  }
+
+  if (oIdx === correct) {
+    options[oIdx].classList.add('correct');
+    stats.correct++;
+  } else {
+    options[oIdx].classList.add('wrong');
+    options[correct].classList.add('correct');
+    stats.wrong++;
+  }
+
+  stats.attempted++;
+  document.getElementById(`ex-${qIdx}`).classList.add('show');
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('attempted').textContent = stats.attempted;
+  document.getElementById('correct').textContent = stats.correct;
+  document.getElementById('wrong').textContent = stats.wrong;
+  document.getElementById('score').textContent = `${stats.correct} / 50`;
+  document.getElementById('progress').style.width = (stats.attempted / 50 * 100) + '%';
+}
+
+function showResult() {
+  const modal = document.getElementById('modal');
+  const score = stats.correct;
+  document.getElementById('resultScore').textContent = `${score} / 50`;
+
+  let msg = '';
+  let title = '';
+  if (score >= 45) { title = '🏆 Docker Master!'; msg = 'Outstanding! You have expert-level Docker knowledge.'; }
+  else if (score >= 35) { title = '🎉 Excellent!'; msg = 'Great job! You have a solid grasp of Docker.'; }
+  else if (score >= 25) { title = '👍 Good Effort'; msg = 'Not bad — review the explanations and try again.'; }
+  else if (score >= 15) { title = '📚 Keep Learning'; msg = 'Study the cheatsheet and retake the test.'; }
+  else { title = '💪 Just Getting Started'; msg = 'Docker takes practice — review basics and give it another go!'; }
+
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultMsg').textContent = msg;
+  modal.classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+function resetQuiz() {
+  stats = { attempted: 0, correct: 0, wrong: 0 };
+  updateStats();
+  closeModal();
+  renderQuiz();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+renderQuiz();
+updateStats();
+</script>
+
+</body>
+</html>

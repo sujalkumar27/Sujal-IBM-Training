@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: checkout-service
+
+features:
+  # Flip to false to fall back to the legacy checkout flow
+  new-checkout: true
